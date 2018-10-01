@@ -1,4 +1,3 @@
-var modelo = require('./modelo.js');
 describe("El juego de las cartas...", function() {
   var juego;
   var usr;

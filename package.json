@@ -1,7 +1,6 @@
 {
   "name": "proyecto",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "directories": {
     "lib": "lib"
@@ -13,5 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "jasmine-node": "^1.16.2"
-  }
+  },
+  "devDependencies": {},
+  "description": ""
 }
