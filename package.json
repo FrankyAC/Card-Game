@@ -6,7 +6,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_module/.bin/jasmine-node servidor"
   },
   "author": "",
   "license": "ISC",
@@ -16,3 +16,4 @@
   "devDependencies": {},
   "description": ""
 }
+node_module/.bin/jasmine-node servidor

@@ -2,11 +2,20 @@ describe("El juego de las cartas...", function() {
   var juego;
   var usr;
   var us2;
+  //var tablero;
   beforeEach(function() {
     juego=new Juego();
     usr=new Usuario("pepe");
     usr2=new Usuario("jose");
+  //tablero=new Tablero();
   });
+
+/*
+it("Compruebo que existe tablero" , function() {
+    expect(tablero.zonas).toBeDefined();
+    expect(tablero.zonas.length).toEqual(0);
+  });
+*/
 
   it("Compruebo condiciones iniciales (cartas, usuario)", function() {
     expect(juego.cartas).toBeDefined();
