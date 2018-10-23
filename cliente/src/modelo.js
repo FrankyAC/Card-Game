@@ -9,6 +9,7 @@ function Juego(){
 		usuario.mazo=_.shuffle(this.crearColeccion());
 		usuario.juego=this;
 		this.usuarios.push(usuario);
+		usuario.id=this.usuarios.length-1;
 	}
 	this.crearColeccion=function(){
 		var mazo=[];
@@ -48,11 +49,19 @@ function Juego(){
 function Partida(nombre){
 	this.nombre=nombre;
 	this.usuariosPartida=[];
+	this.fase=new Inicial();
 	this.tablero=undefined;
 	this.crearTablero=function(){
 		this.tablero=new Tablero();
 	}
 	this.asignarUsuario=function(usuario){
+		// usuario.asignarPartida(this);
+		// this.usuariosPartida.push(usuario);
+		// this.tablero.asignarUsuario(usuario);
+		// this.comprobarInicio();
+		this.fase.asignarUsuario(usuario,this);
+	}
+	this.puedeAsignarUsuario=function(usuario){
 		usuario.asignarPartida(this);
 		this.usuariosPartida.push(usuario);
 		this.tablero.asignarUsuario(usuario);
@@ -62,6 +71,7 @@ function Partida(nombre){
 		if (this.usuariosPartida.length==2){
 			this.turnoInicial();
 			this.asignarManoInicial();
+			this.fase=new Jugando();
 		}
 	}
 	this.asignarManoInicial=function(){
@@ -77,17 +87,67 @@ function Partida(nombre){
 	this.cambiarTurno=function(){
 		for(var i=0;i<this.usuariosPartida.length;i++){
 			this.usuariosPartida[i].cambiarTurno();
+			//this.usuariosPartida[i].cartasFinTurno();
 		}
-		// if (this.usuariosPartida[0].turno){
-		// 	this.usuariosPartida[0].turno=false;
-		// 	this.usuariosPartida[1].esMiTurno();
-		// }else{
-		// 	this.usuariosPartida[1].turno=false;
-		// 	this.usuariosPartida[0].esMiTurno();
-		// }
+	}
+	this.quitarTurno=function(){
+		for(var i=0;i<this.usuariosPartida.length;i++){
+			this.usuariosPartida[i].turno=new NoMiTurno();
+		}
+	}
+	this.finPartida=function(){
+		console.log("La partida ha terminado");
+		this.fase=new Final();
+		this.quitarTurno();
 	}
 	this.crearTablero();
 }
+
+function Inicial(){
+	this.nombre="inicial";
+	this.asignarUsuario=function(usr,partida){
+		partida.puedeAsignarUsuario(usr);
+	}
+	this.usrPasaTurno=function(usuario){
+		console.log("La partida no ha comenzado");
+	}
+	this.usrAtaca=function(carta,obj,usuario){
+		console.log("La partida no ha comenzado");
+	}
+	this.usrJugarCarta=function(carta,usuario){
+		console.log("La partida no ha comenzado");
+	}
+}
+
+function Jugando(){
+	this.nombre="jugando";
+	this.asignarUsuario=function(usr,partida){
+		console.log("La partida ya tiene 2 jugadores");
+	}
+	this.usrPasaTurno=function(usuario){
+		usuario.puedePasarTurno();
+	}
+	this.usrJugarCarta=function(carta,usuario){
+		usuario.fasePuedeJugarCarta(carta);
+	}
+	this.usrAtaca=function(carta,objetivo,usuario){
+		usuario.puedeAtacar(carta,objetivo);
+	}
+}
+
+function Final(){
+	this.nombre="final";
+	this.asignarUsuario=function(usr,partida){
+		console.log("La partida ha terminado");
+	}	
+	this.usrPasaTurno=function(usuario){
+		console.log("La partida ya ha terminado");
+	}
+	this.usrAtaca=function(carta,obj,usuario){
+		console.log("La partida ha terminado");
+	}
+}
+
 
 function Tablero(){
 	this.zonas=[];
@@ -136,18 +196,24 @@ function MiTurno(){
 	}
 	this.cambiarTurno=function(usr){
 		usr.turno=new NoMiTurno();
+		usr.elixir=usr.consumido+1;
+		usr.consumido=0;
+		usr.cartasFinTurno();
 	}
 	this.meToca=function(){
 		return true;
+	}
+	this.esMiTurno=function(usr){
+		//usr.turno=new MiTurno();
+		usr.cogerCarta();
 	}
 }
 
 function NoMiTurno(){
 	this.esMiTurno=function(usr){
+		console.log("Ahora te toca");
 		usr.turno=new MiTurno();
 		usr.cogerCarta();
-		usr.elixir=usr.consumido+1;
-		usr.consumido=0;
 	}
 	this.pasarTurno=function(usr){
 		console.log("No se puede pasar el turno si no se tiene");
@@ -156,7 +222,7 @@ function NoMiTurno(){
 		console.log("No es tu turno");
 	}
 	this.cambiarTurno=function(usr){
-		usr.turno=new MiTurno();
+		//usr.turno=new MiTurno();
 		this.esMiTurno(usr);
 	}
 	this.meToca=function(){
@@ -166,6 +232,7 @@ function NoMiTurno(){
 
 function Usuario(nombre){
 	this.nombre=nombre;
+	this.id=undefined;
 	this.juego=undefined;
 	this.vidas=20;
 	this.mazo=[];
@@ -192,8 +259,11 @@ function Usuario(nombre){
 		this.turno.cambiarTurno(this);
 	}
 	this.pasarTurno=function(){
-		//this.partida.cambiarTurno();
-		this.turno.pasarTurno(this);
+		this.partida.fase.usrPasaTurno(this);
+		//this.turno.pasarTurno(this);
+	}
+	this.puedePasarTurno=function(){
+		this.turno.pasarTurno(this);	
 	}
 	this.esMiTurno=function(){
 		this.turno.esMiTurno(this);
@@ -207,10 +277,20 @@ function Usuario(nombre){
 		carta= this.mazo.find(function(each){
 			return each.posicion=="mazo";
 		});
-		carta.posicion="mano";
+		if (carta){
+			carta.posicion="mano";
+		}
+		else
+		{
+			this.partida.finPartida();
+		}
+	}
+	this.fasePuedeJugarCarta=function(carta){
+		this.turno.jugarCarta(this,carta);
 	}
 	this.jugarCarta=function(carta){
-		this.turno.jugarCarta(this,carta);
+		this.partida.fase.usrJugarCarta(carta,this);
+		//this.turno.jugarCarta(this,carta);
 	}
 	this.puedeJugarCarta=function(carta){
 		if (this.elixir>=carta.coste){
@@ -221,8 +301,18 @@ function Usuario(nombre){
 		else
 			console.log("No tienes suficiente elixir");
 	}
+	this.puedeAtacar=function(carta,objetivo){
+		if(!carta.haAtacado){
+			objetivo.esAtacado(carta);
+			carta.haAtacado=true;
+			this.comprobarCartasAtaque();
+		}else{
+			console.log("Esta carta ya ha atacado");
+			this.comprobarCartasAtaque();
+		}
+	}
 	this.ataque=function(carta,objetivo){
-		objetivo.esAtacado(carta);
+		this.partida.fase.usrAtaca(carta,objetivo,this);
 	}
 	this.esAtacado=function(carta){
 		this.vidas=this.vidas-carta.ataque;
@@ -230,7 +320,7 @@ function Usuario(nombre){
 	}
 	this.comprobarVidas=function(){
 		if (this.vidas<=0){
-			this.juego.fin();
+			this.partida.finPartida();
 		}
 	}
 	this.manoInicial=function(){
@@ -243,16 +333,65 @@ function Usuario(nombre){
 			return each.posicion=="mano" && each.coste==coste;
 		});
 	}
+	this.obtenerUnaCarta=function(){
+		return this.mazo.find(function(each){
+			return each.posicion=="mano";
+		});	
+	}
+	this.obtenerCartasAtaque=function(){
+		return this.mazo.filter(function(each){
+			return each.posicion=="ataque";
+		});
+	}
+	this.comprobarCartasAtaque=function(){
+		var carta;
+		var cartasAtaque;
+		cartasAtaque= this.obtenerCartasAtaque();
+		if (cartasAtaque){
+			carta=cartasAtaque.find(function(each){
+				return !each.haAtacado;
+			});
+			if (carta==undefined){
+				this.pasarTurno();
+				this.ponerNoHaAtacado();
+			}
+		}
+	}
+	this.ponerNoHaAtacado=function(){
+		_.each(this.obtenerCartasAtaque(),function(item){
+			item.haAtacado=false;
+		})
+	}
+	this.obtenerCartasMano=function(){
+		return this.mazo.filter(function(each){
+			return each.posicion=="mano";
+		});
+	}
+	this.cartasFinTurno=function(){
+		var cartasMano;
+		cartasMano=this.obtenerCartasMano();
+		if(cartasMano.length>10){
+			for(var i=0;i<cartasMano.length-10;i++){
+				this.descartarCarta(cartasMano[i]);
+			}
+		}
+	}
+	this.descartarCarta=function(carta){
+		carta.posicion="cementerio";
+	}
 }
 
-function Carta(vidas,ataque,nombre,coste){
+
+function Carta(nombre,vidas,ataque,coste){
 	this.vidas=vidas;
 	this.ataque=ataque;
 	this.nombre=nombre;
 	this.coste=coste;
 	this.posicion="mazo";
+	this.haAtacado=false;
 	this.esAtacado=function(carta){
 		this.vidas=this.vidas-carta.ataque;
+		carta.vidas=carta.vidas-this.ataque;
 		this.comprobarVidas();
 		carta.comprobarVidas();
 	}
